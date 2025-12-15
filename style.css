@@ -1,0 +1,49 @@
+button{
+  background-color:#eb5031;;
+  border: 0px;
+  border-radius:10px
+  
+}
+ button:hover{
+background-color:white;
+cursor:pointer;
+transition-duration:0.3s;
+}
+
+th{
+  text-transform:uppercase;
+  position:sticky;
+  top:0;
+  background-color:#eb5031;
+  padding:10px;
+  margin-right:10px;
+  border:0;
+  color:black;
+  letter-spacing:2px;
+  border-bottom:4px solid #473c3a;
+}
+
+tr:hover{
+background-color:orange;
+transition-duration:0,5s;
+}
+
+img{
+  border-radius: 10px;
+}
+
+iframe{
+  border-radius:5px;
+  
+}
+
+table{
+border-spacing:0px;
+  
+}
+
+body{
+  font-family:Comic Sans MS ;
+  background-color: #e6eaeb ;
+  margin:0px;
+}
