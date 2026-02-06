@@ -11,18 +11,19 @@
     <div class="app">
       <header class="hero">
         <div>
-          <p class="badge">Strategia przeglądarkowa • tryb online (symulowany)</p>
+          <p class="badge">Strategia przeglądarkowa • tryb single player • v2.1</p>
           <h1>Koronna Liga</h1>
           <p class="subtitle">
-            Zbuduj swoje państwo, rozwijaj wojsko i walcz z rywalami w świecie
-            inspirowanym Cities: Skylines 2 + strategią militarną.
+            Zbuduj swoje państwo, rozwijaj wojsko i walcz z botami w świecie
+            inspirowanym Cities: Skylines 2 + nowoczesną strategią militarną.
           </p>
         </div>
-        <div class="account-panel" id="account-panel">
+        <div class="account-panel hidden" id="account-panel">
           <div class="account-info">
             <p class="label">Konto dowódcy</p>
             <p class="value" id="account-name">Brak</p>
           </div>
+          <button class="secondary" id="reset-btn">Resetuj kampanię</button>
           <button class="secondary" id="logout-btn">Wyloguj</button>
         </div>
       </header>
@@ -48,7 +49,7 @@
         </form>
       </section>
 
-      <main class="dashboard" id="dashboard">
+      <main class="dashboard hidden" id="dashboard">
         <section class="panel resources">
           <h2>Twoje państwo</h2>
           <div class="kingdom">
@@ -73,6 +74,42 @@
           <p class="save-note" id="save-state">Stan zapisany.</p>
         </section>
 
+        <section class="panel theater">
+          <div class="panel-header">
+            <div>
+              <h2>Teatr operacyjny</h2>
+              <p class="meta">
+                Przełączaj miasta, zarządzaj infrastrukturą i obserwuj wykryte
+                zagrożenia.
+              </p>
+            </div>
+            <div class="panel-actions">
+              <button class="secondary" id="scan-btn">Skanuj radar</button>
+            </div>
+          </div>
+          <div class="theater-grid">
+            <aside class="city-list" id="city-list"></aside>
+            <div class="city-main">
+              <div class="city-summary" id="city-summary"></div>
+              <div class="city-assets" id="city-assets"></div>
+              <div class="city-patrols">
+                <h4>Aktywne patrole</h4>
+                <ul id="patrol-list"></ul>
+              </div>
+            </div>
+            <div class="radar">
+              <h3>Radar & wykryte cele</h3>
+              <div class="radar-scope" id="radar-scope">
+                <div class="radar-grid"></div>
+                <div class="radar-sweep"></div>
+              </div>
+              <p class="meta radar-note">Automatyczne skanowanie co kilka sekund.</p>
+              <ul id="radar-list"></ul>
+            </div>
+          </div>
+          <div class="minimap" id="minimap"></div>
+        </section>
+
         <section class="panel buildings">
           <h2>Miasto i infrastruktura</h2>
           <p>Rozwijaj budynki, aby zwiększać produkcję i dostęp do wojska.</p>
@@ -85,10 +122,16 @@
           <div class="card-list" id="unit-list"></div>
         </section>
 
+        <section class="panel defenses">
+          <h2>Obrona i systemy strategiczne</h2>
+          <p>Buduj tarcze przeciwlotnicze, rakiety i nowoczesne systemy wykrycia.</p>
+          <div class="card-list" id="defense-list"></div>
+        </section>
+
         <section class="panel diplomacy">
           <h2>Mapa świata</h2>
           <p>
-            Sąsiedzi rozwijają swoje państwa. Atakuj, zdobywaj łupy i ulepszaj
+            Wrogie boty wzmacniają swoje państwa. Atakuj, zdobywaj łupy i ulepszaj
             jednostki.
           </p>
           <div class="card-list" id="enemy-list"></div>
