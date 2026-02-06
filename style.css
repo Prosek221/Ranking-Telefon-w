@@ -8,6 +8,7 @@
   --text: #1d1d1f;
   --muted: #5f6773;
   --border: #e1e5ee;
+  --radar: #38d66a;
 }
 
 * {
@@ -360,6 +361,7 @@ button.secondary {
 
 .action-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

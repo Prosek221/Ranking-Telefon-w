@@ -539,9 +539,26 @@ const updateArmyOverview = () => {
     </div>
     <div>
       <p class="label">Utrzymanie</p>
-      <p class="value">${formatNumber(calculateUpkeep())} żywności/dzień</p>
+      <p class="value">${formatNumber(upkeep.food)} żywności / ${formatNumber(
+    upkeep.gold,
+  )} złota</p>
     </div>
   `;
+};
+
+const startPatrol = (city, unitKey) => {
+  if (city.army[unitKey] <= 0) return;
+  city.army[unitKey] -= 1;
+  state.patrols.push({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    cityId: city.id,
+    unitKey,
+    type: UNITS[unitKey].category,
+    power: unitPower(unitKey),
+  });
+  addLog(`Patrol ${UNITS[unitKey].name} wystartował z ${city.name}.`);
+  scheduleSave();
+  render();
 };
 
 const updateUnitList = () => {
@@ -564,6 +581,12 @@ const updateUnitList = () => {
       scheduleSave();
       render();
     });
+
+    const patrolButton = document.createElement("button");
+    patrolButton.textContent = "Patroluj";
+    patrolButton.className = "secondary";
+    patrolButton.disabled = city.army[key] <= 0;
+    patrolButton.addEventListener("click", () => startPatrol(city, key));
 
     const upgradeCost = {
       gold: 90 + state.upgrades[key] * 40,
@@ -592,6 +615,9 @@ const updateUnitList = () => {
         <p class="meta">Siła jednostki: ${unitPower(key)}</p>
         <p class="meta">Wymaga: ${BUILDINGS[unit.requires].name}</p>
         <p class="meta">Koszt rekrutacji: ${costText}</p>
+        <p class="meta">Utrzymanie: ${unit.upkeep.food || 0} żywności / ${
+      unit.upkeep.gold || 0
+    } złota</p>
         <p class="meta">Ulepszenie: ${Object.entries(upgradeCost)
           .map(([resource, amount]) => `${amount} ${resource}`)
           .join(", ")}</p>
@@ -599,7 +625,7 @@ const updateUnitList = () => {
     `;
     const actions = document.createElement("div");
     actions.className = "action-row";
-    actions.append(recruitButton, upgradeButton);
+    actions.append(recruitButton, patrolButton, upgradeButton);
     card.appendChild(actions);
     ui.unitList.appendChild(card);
   });
@@ -817,11 +843,16 @@ const tick = () => {
     });
   });
 
-  const upkeep = calculateUpkeep() * elapsed;
-  state.resources.food -= upkeep;
+  const upkeep = calculateUpkeep();
+  state.resources.food -= upkeep.food * elapsed;
+  state.resources.gold -= upkeep.gold * elapsed;
   if (state.resources.food < 0) {
     state.morale = Math.max(35, state.morale - 4);
     state.resources.food = 0;
+  }
+  if (state.resources.gold < 0) {
+    state.morale = Math.max(35, state.morale - 3);
+    state.resources.gold = 0;
   }
 
   if (state.resources.food > 140 + state.population * 2) {
@@ -841,6 +872,7 @@ const tick = () => {
 };
 
 const render = () => {
+  if (!state) return;
   ui.accountName.textContent = state.account ?? "Brak";
   ui.kingdomName.textContent = state.kingdom ?? "—";
   ui.dayCount.textContent = state.day;
