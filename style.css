@@ -57,7 +57,7 @@ body {
 
 .subtitle {
   color: var(--muted);
-  max-width: 500px;
+  max-width: 520px;
   line-height: 1.5;
 }
 
@@ -155,6 +155,19 @@ button.secondary {
   margin-bottom: 8px;
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .kingdom {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -197,6 +210,126 @@ button.secondary {
   color: var(--muted);
   font-size: 0.8rem;
   margin-top: 8px;
+}
+
+.theater-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(240px, 2fr) minmax(220px, 1.2fr);
+  gap: 16px;
+}
+
+.city-list {
+  display: grid;
+  gap: 12px;
+}
+
+.city-pill {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f4f6fb;
+  border: 1px solid transparent;
+  color: var(--text);
+}
+
+.city-pill span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.city-pill .city-meta {
+  font-size: 0.75rem;
+  color: #3a4a6f;
+}
+
+.city-pill.active {
+  border-color: var(--primary);
+  background: #e8efff;
+}
+
+.city-main {
+  display: grid;
+  gap: 16px;
+}
+
+.city-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: #fbfcff;
+}
+
+.city-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.city-assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.city-assets ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.city-assets li {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.radar {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #f8faff;
+}
+
+.radar h3 {
+  margin-bottom: 8px;
+}
+
+.radar-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+#radar-list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+#radar-list .contact,
+#radar-list .empty {
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+#radar-list .contact.undetected {
+  opacity: 0.7;
 }
 
 .card-list {
@@ -255,6 +388,17 @@ button.secondary {
 
 .hidden {
   display: none;
+}
+
+@media (max-width: 980px) {
+  .theater-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .city-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 720px) {
