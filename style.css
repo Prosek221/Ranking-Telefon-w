@@ -216,6 +216,7 @@ button.secondary {
 .theater-grid {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(240px, 1.2fr);
+  grid-template-columns: minmax(160px, 1fr) minmax(240px, 2fr) minmax(220px, 1.2fr);
   gap: 16px;
 }
 
@@ -269,6 +270,7 @@ button.secondary {
 .city-summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 10px;
 }
 
@@ -280,6 +282,7 @@ button.secondary {
 
 .city-assets ul,
 .city-patrols ul {
+.city-assets ul {
   list-style: none;
   display: grid;
   gap: 6px;
@@ -288,6 +291,7 @@ button.secondary {
 
 .city-assets li,
 .city-patrols li {
+.city-assets li {
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -356,6 +360,13 @@ button.secondary {
 .radar-note {
   text-align: center;
   margin-bottom: 8px;
+.radar-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 12px;
 }
 
 #radar-list {

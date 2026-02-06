@@ -65,6 +65,14 @@ const BUILDINGS = {
     name: "Port wojenny",
     description: "Umożliwia budowę nowoczesnych okrętów i łodzi podwodnych.",
     baseCost: { wood: 160, stone: 140, gold: 120 },
+    description: "Pozwala utrzymać eskadry F-16 i F-35.",
+    baseCost: { stone: 160, gold: 140, tech: 40 },
+    production: {},
+  },
+  shipyard: {
+    name: "Stocznia obronna",
+    description: "Umożliwia budowę nowoczesnych okrętów.",
+    baseCost: { wood: 140, stone: 120, gold: 100 },
     production: {},
   },
   missileSilo: {
@@ -97,6 +105,7 @@ const DEFENSE_SYSTEMS = {
   droneNet: {
     name: "Sieć dronów patrolowych",
     description: "Wspiera wykrywanie stealth i ochronę granic.",
+    description: "Wspiera wykrywanie F-35 i ochronę granic.",
     baseCost: { gold: 110, tech: 50, wood: 40 },
     power: 12,
   },
@@ -437,6 +446,50 @@ const UNITS = {
     upkeep: { food: 1, gold: 4 },
     requires: ["shipyard"],
     category: "sea",
+};
+
+const UNITS = {
+  mechanized: {
+    name: "Piechota zmechanizowana",
+    cost: { food: 55, gold: 45, tech: 10 },
+    power: 14,
+    upkeep: { food: 2 },
+    requires: "barracks",
+  },
+  tanks: {
+    name: "Czołgi Panther",
+    cost: { gold: 120, stone: 60, tech: 25 },
+    power: 26,
+    upkeep: { food: 2 },
+    requires: "barracks",
+  },
+  artillery: {
+    name: "Artyleria rakietowa",
+    cost: { gold: 90, wood: 40, tech: 20 },
+    power: 22,
+    upkeep: { food: 1 },
+    requires: "barracks",
+  },
+  f16: {
+    name: "Myśliwce F-16",
+    cost: { gold: 160, tech: 50, stone: 40 },
+    power: 30,
+    upkeep: { food: 1 },
+    requires: "airbase",
+  },
+  f35: {
+    name: "Myśliwce F-35 (stealth)",
+    cost: { gold: 220, tech: 80, stone: 50 },
+    power: 40,
+    upkeep: { food: 1 },
+    requires: "airbase",
+  },
+  destroyer: {
+    name: "Niszczyciele rakietowe",
+    cost: { gold: 190, wood: 70, tech: 35 },
+    power: 34,
+    upkeep: { food: 1 },
+    requires: "shipyard",
   },
 };
 
@@ -451,6 +504,14 @@ const ENEMY_RAIDS = [
   { type: "air", name: "Eskadra F-35", power: 130, stealth: true },
   { type: "land", name: "Brygada pancerna", power: 120, stealth: false },
   { type: "sea", name: "Grupa niszczycieli", power: 140, stealth: false },
+  { type: "land", name: "Brygada pancerna", power: 110, stealth: false },
+  { type: "sea", name: "Grupa niszczycieli", power: 120, stealth: false },
+];
+
+const CITY_TEMPLATES = [
+  { id: "capital", name: "Stolica Koronna", trait: "Główne centrum dowodzenia" },
+  { id: "harbor", name: "Port Zachodni", trait: "Dostęp do floty" },
+  { id: "frontier", name: "Twierdza Północna", trait: "Tarcza granic" },
 ];
 
 const CITY_TEMPLATES = [
@@ -555,6 +616,36 @@ const defaultState = (account, kingdom) => {
   };
 };
 
+    interceptor: 2,
+    droneNet: template.id === "frontier" ? 1 : 0,
+    coastalMissiles: template.id === "harbor" ? 1 : 0,
+  },
+  army: {
+    mechanized: template.id === "frontier" ? 3 : 1,
+    tanks: template.id === "frontier" ? 2 : 0,
+    artillery: 1,
+    f16: template.id === "capital" ? 2 : 0,
+    f35: 0,
+    destroyer: template.id === "harbor" ? 1 : 0,
+  },
+});
+
+const defaultState = (account, kingdom) => ({
+  account,
+  kingdom,
+  day: 1,
+  morale: 100,
+  population: 65,
+  resources: { gold: 650, food: 420, wood: 260, stone: 210, tech: 120 },
+  cities: CITY_TEMPLATES.map((template) => createCityState(template)),
+  currentCityId: CITY_TEMPLATES[0].id,
+  upgrades: Object.fromEntries(Object.keys(UNITS).map((key) => [key, 0])),
+  log: ["Rada dowódców: nowa kampania została rozpoczęta."],
+  radarContacts: [],
+  lastTick: Date.now(),
+  nextRaidAt: Date.now() + 14000,
+});
+
 const normalizeState = (loadedState, account, kingdom) => {
   if (!loadedState) return defaultState(account, kingdom);
   const fresh = defaultState(account, kingdom);
@@ -575,6 +666,7 @@ const normalizeState = (loadedState, account, kingdom) => {
         CITY_TEMPLATES.find((item) => item.id === city.id) ||
         CITY_TEMPLATES[index] ||
         CITY_TEMPLATES[0];
+      const template = CITY_TEMPLATES.find((item) => item.id === city.id) || CITY_TEMPLATES[index] || CITY_TEMPLATES[0];
       const baseline = createCityState(template);
       return {
         ...baseline,
@@ -595,6 +687,11 @@ const normalizeState = (loadedState, account, kingdom) => {
   merged.patrols = Array.isArray(loadedState.patrols) ? loadedState.patrols : [];
   merged.nextRaidAt = loadedState.nextRaidAt || Date.now() + 14000;
   merged.nextScanAt = loadedState.nextScanAt || Date.now() + 4000;
+    merged.currentCityId = merged.cities[0].id;
+  }
+
+  merged.radarContacts = Array.isArray(loadedState.radarContacts) ? loadedState.radarContacts : [];
+  merged.nextRaidAt = loadedState.nextRaidAt || Date.now() + 14000;
 
   return merged;
 };
@@ -698,6 +795,9 @@ const updateCityList = () => {
       .reduce((sum, key) => sum + city.army[key], 0);
     const seaUnits = Object.keys(UNITS).filter((key) => UNITS[key].category === "sea")
       .reduce((sum, key) => sum + city.army[key], 0);
+    const airUnits = city.army.f16 + city.army.f35;
+    const armorUnits = city.army.tanks + city.army.mechanized;
+    const seaUnits = city.army.destroyer;
     button.innerHTML = `
       <strong>${city.name}</strong>
       <span>${city.trait}</span>
@@ -730,6 +830,7 @@ const updateCitySummary = () => {
       </div>
       <div>
         <p class="label">Porty</p>
+        <p class="label">Stocznie</p>
         <p class="value">${city.buildings.shipyard}</p>
       </div>
       <div>
@@ -934,6 +1035,9 @@ const updateArmyOverview = () => {
   const totalPower = state.cities.reduce((sum, city) => sum + calculateCityPower(city), 0);
   const defensePower = state.cities.reduce((sum, city) => sum + calculateDefensePower(city), 0);
   const upkeep = calculateUpkeep();
+const updateArmyOverview = () => {
+  const totalPower = state.cities.reduce((sum, city) => sum + calculateCityPower(city), 0);
+  const defensePower = state.cities.reduce((sum, city) => sum + calculateDefensePower(city), 0);
   ui.armyOverview.innerHTML = `
     <div>
       <p class="label">Siła bojowa</p>
@@ -979,6 +1083,7 @@ const updateUnitList = () => {
     recruitButton.textContent = "Rekrutuj";
     recruitButton.disabled =
       !cityHasRequirements(city, unit) || !canAfford(unit.cost) || state.population <= 0;
+      !city.buildings[unit.requires] || !canAfford(unit.cost) || state.population <= 0;
     recruitButton.addEventListener("click", () => {
       if (!canAfford(unit.cost) || state.population <= 0) return;
       applyCost(unit.cost);
@@ -1004,6 +1109,7 @@ const updateUnitList = () => {
     upgradeButton.textContent = "Ulepsz";
     upgradeButton.disabled =
       !state.cities.some((cityItem) => cityItem.buildings.academy) ||
+    upgradeButton.disabled = !state.cities.some((cityItem) => cityItem.buildings.academy) ||
       !canAfford(upgradeCost);
     upgradeButton.addEventListener("click", () => {
       if (!canAfford(upgradeCost)) return;
@@ -1023,6 +1129,9 @@ const updateUnitList = () => {
         <p class="meta">Stan w mieście: ${city.army[key]}</p>
         <p class="meta">Siła jednostki: ${unitPower(key)}</p>
         <p class="meta">Wymaga: ${getUnitRequirementText(unit)}</p>
+        <p class="meta">Stan w mieście: ${city.army[key]}</p>
+        <p class="meta">Siła jednostki: ${unitPower(key)}</p>
+        <p class="meta">Wymaga: ${BUILDINGS[unit.requires].name}</p>
         <p class="meta">Koszt rekrutacji: ${costText}</p>
         <p class="meta">Utrzymanie: ${unit.upkeep.food || 0} żywności / ${
       unit.upkeep.gold || 0
@@ -1061,6 +1170,17 @@ const updateEnemyList = () => {
     ui.enemyList.appendChild(card);
   });
 };
+
+const calculateUpkeep = () =>
+  state.cities.reduce(
+    (sum, city) =>
+      sum +
+      Object.entries(UNITS).reduce(
+        (unitSum, [key, unit]) => unitSum + city.army[key] * (unit.upkeep.food || 0),
+        0,
+      ),
+    0,
+  );
 
 const resolveBattle = (enemyPower, enemyName) => {
   const ownPower = state.cities.reduce((sum, city) => sum + calculateCityPower(city), 0);
@@ -1152,6 +1272,9 @@ const dispatchPatrol = (contact) => {
     addLog(`Patrol ${UNITS[patrol.unitKey].name} został zniszczony przez ${contact.name}.`);
   }
   state.patrols.splice(patrolIndex, 1);
+  } else {
+    addLog("Radar: brak nowych wykryć.");
+  }
   scheduleSave();
   render();
 };
@@ -1180,6 +1303,10 @@ const updateRadarList = () => {
       action.className = "secondary";
       action.disabled = !state.patrols.some((patrol) => patrol.type === contact.type);
       action.addEventListener("click", () => dispatchPatrol(contact));
+      action.textContent = "Odpal rakietę";
+      action.className = "secondary";
+      action.disabled = !city || city.defenses.interceptor <= 0 || contact.type !== "air";
+      action.addEventListener("click", () => interceptContact(contact, city));
       item.appendChild(action);
     }
     ui.radarList.appendChild(item);
@@ -1188,6 +1315,22 @@ const updateRadarList = () => {
 
 const scheduleRaid = () => {
   if (Date.now() < state.nextRaidAt || state.cities.length === 0) return;
+const interceptContact = (contact, city) => {
+  if (!city || city.defenses.interceptor <= 0) return;
+  city.defenses.interceptor -= 1;
+  const chance = 0.5 + city.defenses.aaShield * 0.1 + city.buildings.radarStation * 0.05;
+  if (Math.random() < chance) {
+    addLog(`Rakieta przechwytująca z ${city.name} zestrzeliła ${contact.name}.`);
+    state.radarContacts = state.radarContacts.filter((item) => item.id !== contact.id);
+  } else {
+    addLog(`Atak rakietowy z ${city.name} chybił ${contact.name}.`);
+  }
+  scheduleSave();
+  render();
+};
+
+const scheduleRaid = () => {
+  if (Date.now() < state.nextRaidAt) return;
   const raid = ENEMY_RAIDS[Math.floor(Math.random() * ENEMY_RAIDS.length)];
   const target = state.cities[Math.floor(Math.random() * state.cities.length)];
   const contact = {
@@ -1247,6 +1390,10 @@ const resolveRaids = () => {
       if (city.integrity <= 0) {
         loseCity(city);
       }
+      addLog(`${city.name} ucierpiało po ataku ${contact.name}. Straty w zasobach.`);
+      state.resources.gold = Math.max(0, state.resources.gold - 70);
+      state.resources.food = Math.max(0, state.resources.food - 40);
+      state.morale = Math.max(30, state.morale - 8);
     }
   });
 
